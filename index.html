@@ -223,6 +223,20 @@
 </nav>
 
 <script>
+let NEWS_DATA = [];
+let bookmarks = JSON.parse(localStorage.getItem('mb_bookmarks') || '[]');
+let currentFilter = '전체';
+let currentArticle = null;
+let ttsUtterance = null;
+let ttsPlaying = false;
+
+const MARKET_DATA = [
+  { name:'KOSPI',   val:'2,641', chg:'+1.24%', up:true  },
+  { name:'S&P 500', val:'5,312', chg:'+0.67%', up:true  },
+  { name:'USD/KRW', val:'1,328', chg:'+0.12%', up:true  },
+  { name:'WTI 유가', val:'$83.2', chg:'−0.45%', up:false },
+];
+
 const CAT_KEYS = {
   '주식':    ['주식','코스피','코스닥','증시','상장','배당','삼성전자','sk하이닉스','etf'],
   '환율':    ['환율','달러','원화','엔화','유로','외환'],
