@@ -98,7 +98,9 @@
   .modal-close { background: none; border: 1px solid var(--rule); cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 14px; }
   .modal-article-title { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 14px; margin-bottom: 12px; color: var(--ink-light); line-height: 1.4; }
   .modal-body-text { font-size: 13px; line-height: 1.8; color: var(--ink-light); }
-  .read-more { display: inline-block; margin-top: 12px; font-size: 11px; color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); }
+  .read-more { display: inline-block; margin-top: 12px; font-size: 11px; color: var(--ink-muted); text-decoration: none; border-bottom: 1px solid var(--rule); }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); }
   .tts-ctrl { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); }
   .tts-btn { background: var(--ink); color: var(--paper); border: none; padding: 8px 16px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
   .tts-btn:hover, .tts-btn.playing { background: var(--accent); }
@@ -122,6 +124,10 @@
   .nav-btn:hover { color: var(--paper); }
   .nav-badge { position: absolute; top: 6px; background: var(--accent); color: #fff; width: 14px; height: 14px; border-radius: 50%; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
   .spacer { height: 70px; }
+.sort-bar { padding: 7px 16px; background: var(--paper); border-bottom: 1px solid var(--rule); display: flex; gap: 8px; }
+.sort-btn { background: none; border: none; font-size: 11px; font-family: "Noto Sans KR", sans-serif; color: var(--ink-muted); cursor: pointer; padding: 3px 10px; border-radius: 20px; transition: all 0.15s; }
+.sort-btn.active { background: var(--ink); color: var(--paper); font-weight: 700; }
+.sort-btn:hover { color: var(--ink); }
   @keyframes fade-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 </style>
 </head>
@@ -171,6 +177,11 @@
   <button class="filter-btn" data-cat="암호화폐">암호화폐</button>
 </div>
 
+<div class="sort-bar" id="sort-bar">
+  <button class="sort-btn active" data-sort="latest">최신순</button>
+  <button class="sort-btn" data-sort="week">1주일 이내</button>
+  <button class="sort-btn" data-sort="day">오늘</button>
+</div>
 <main class="content-wrap" id="main-content">
   <div class="loading-wrap">
     <div class="loading-icon">📰</div>
@@ -305,7 +316,8 @@ async function fetchNews() {
 
 function renderContent() {
   const main = document.getElementById('main-content');
-  const filtered = currentFilter === '전체' ? NEWS_DATA : NEWS_DATA.filter(n => n.cat === currentFilter);
+  let filtered = currentFilter === '전체' ? NEWS_DATA : NEWS_DATA.filter(n => n.cat === currentFilter);
+  filtered = applySort(filtered);
   const featured = filtered.find(n => n.featured) || filtered[0];
   const rest = filtered.filter(n => n !== featured);
 
@@ -451,6 +463,8 @@ function closeBookmarks() {
 
 function refreshNews() { fetchNews(); }
 
+let currentSort = 'latest';
+
 function setupFilters() {
   document.getElementById('filter-bar').addEventListener('click', e => {
     const btn = e.target.closest('.filter-btn'); if (!btn) return;
@@ -458,6 +472,30 @@ function setupFilters() {
     btn.classList.add('active'); currentFilter = btn.dataset.cat;
     if (NEWS_DATA.length > 0) renderContent();
   });
+  document.getElementById('sort-bar').addEventListener('click', e => {
+    const btn = e.target.closest('.sort-btn'); if (!btn) return;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentSort = btn.dataset.sort;
+    if (NEWS_DATA.length > 0) renderContent();
+  });
+}
+
+function applySort(articles) {
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
+  let filtered = [...articles];
+  if (currentSort === 'day') {
+    filtered = filtered.filter(a => {
+      if (!a.pubDate) return true;
+      return (now - new Date(a.pubDate)) < day;
+    });
+  } else if (currentSort === 'week') {
+    filtered = filtered.filter(a => {
+      if (!a.pubDate) return true;
+      return (now - new Date(a.pubDate)) < day * 7;
+    });
+  }
+  return filtered;
 }
 
 function init() {
