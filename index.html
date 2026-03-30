@@ -223,22 +223,6 @@
 </nav>
 
 <script>
-const RSS_FEEDS = [
-  { q: '주식+코스피+증시',         source: '경제뉴스', cat: '주식'    },
-  { q: '환율+달러+원화',           source: '경제뉴스', cat: '환율'    },
-  { q: '부동산+아파트+주택',       source: '경제뉴스', cat: '부동산'  },
-  { q: '금리+한국은행+채권',       source: '경제뉴스', cat: '금리'    },
-  { q: '비트코인+암호화폐+코인',   source: '경제뉴스', cat: '암호화폐'},
-  { q: '미국경제+연준+글로벌',     source: '경제뉴스', cat: '국제'    },
-];
-
-const GNEWS = 'https://corsproxy.io/?https://news.google.com/rss/search?hl=ko&gl=KR&ceid=KR:ko&q=';
-const MARKET_DATA = [
-  { name:'KOSPI',   val:'2,641', chg:'+1.24%', up:true  },
-  { name:'S&P 500', val:'5,312', chg:'+0.67%', up:true  },
-  { name:'USD/KRW', val:'1,328', chg:'+0.12%', up:true  },
-  { name:'WTI 유가', val:'$83.2', chg:'−0.45%', up:false },
-];
 const CAT_KEYS = {
   '주식':    ['주식','코스피','코스닥','증시','상장','배당','삼성전자','sk하이닉스','etf'],
   '환율':    ['환율','달러','원화','엔화','유로','외환'],
@@ -247,13 +231,6 @@ const CAT_KEYS = {
   '암호화폐':['비트코인','이더리움','코인','가상화폐','crypto','bitcoin'],
   '국제':    ['미국','중국','유럽','일본','글로벌','수출','무역','gdp'],
 };
-
-let NEWS_DATA = [];
-let bookmarks = JSON.parse(localStorage.getItem('mb_bookmarks') || '[]');
-let currentFilter = '전체';
-let currentArticle = null;
-let ttsUtterance = null;
-let ttsPlaying = false;
 
 function detectCat(title, desc, def) {
   const text = (title + ' ' + (desc || '')).toLowerCase();
@@ -276,59 +253,37 @@ function stripHtml(s) {
   return (s||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').trim();
 }
 
-async function fetchRSS(feed) {
-  try {
-    const url = `${GNEWS}${encodeURIComponent(feed.q)}`;
-    const res = await fetch(url);
-    const xml = await res.text();
-    if (!xml) return [];
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-    const items = [...doc.querySelectorAll('item')];
-    return items.slice(0, 4).map(item => ({
-      title: stripHtml(item.querySelector('title')?.textContent || '').replace(/ - [^-]+$/, ''),
-      desc: stripHtml(item.querySelector('description')?.textContent || '').slice(0, 200),
-      pubDate: item.querySelector('pubDate')?.textContent || '',
-      link: item.querySelector('link')?.textContent || '',
-      source: item.querySelector('source')?.textContent || feed.source,
-      cat: feed.cat,
-    })).filter(a => a.title);
-  } catch(e) { return []; }
-}
-
 async function fetchNews() {
   document.getElementById('main-content').innerHTML = `<div class="loading-wrap"><div class="loading-icon">📰</div><p style="font-size:13px;line-height:1.8">실시간 뉴스를 불러오고 있습니다<br><span class="loading-dots"><span>•</span><span>•</span><span>•</span></span></p></div>`;
 
   try {
-    const results = await Promise.allSettled(RSS_FEEDS.map(f => fetchRSS(f)));
-    let articles = [];
-    results.forEach(r => { if (r.status === 'fulfilled') articles.push(...r.value); });
+    const res = await fetch('/.netlify/functions/news');
+    if (!res.ok) throw new Error('Function error: ' + res.status);
+    const data = await res.json();
+    const articles = data.articles || [];
+    if (articles.length === 0) throw new Error('No articles');
 
-    const seen = new Set();
-    articles = articles.filter(a => {
-      if (!a.title || seen.has(a.title)) return false;
-      seen.add(a.title); return true;
-    }).sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-
-    if (articles.length === 0) throw new Error('no articles');
-
-    NEWS_DATA = articles.slice(0, 12).map((a, i) => ({
-      id: i+1, cat: a.cat, featured: i === 0,
-      headline: a.title,
-      byline: a.source + ' · ' + timeAgo(a.pubDate),
-      summary: a.desc || '기사 내용을 불러올 수 없습니다.',
-      url: a.link, lang: 'ko',
+    NEWS_DATA = articles.map((a, i) => ({
+      id: i + 1,
+      cat: detectCat(a.title, a.desc, '국제'),
+      featured: i === 0,
+      headline: stripHtml(a.title),
+      byline: (a.source || '뉴스') + ' · ' + timeAgo(a.pubDate),
+      summary: stripHtml(a.desc) || '기사 내용을 불러올 수 없습니다.',
+      url: a.link,
+      lang: 'ko',
     }));
     renderContent();
 
   } catch(e) {
+    console.error('fetchNews error:', e);
     NEWS_DATA = [
-      { id:1, cat:'주식',    featured:true,  headline:'코스피, 외국인 매수세에 2,640선 회복…반도체주 강세',     byline:'한국경제 · 1시간 전', summary:'코스피가 외국인 투자자들의 매수세에 힘입어 2,640선을 회복했다. 삼성전자와 SK하이닉스 등 반도체주가 강세를 보이며 지수 상승을 이끌었다.', url:'', lang:'ko' },
-      { id:2, cat:'환율',    featured:false, headline:'달러/원 환율 1,325원대로 하락…수출 호조 영향',           byline:'연합뉴스 · 2시간 전',  summary:'원/달러 환율이 1,325원대로 하락했다. 무역수지 흑자 지속과 외국인 주식 매수가 원화 강세를 이끌고 있다.', url:'', lang:'ko' },
-      { id:3, cat:'국제',    featured:false, headline:'미 연준, 연내 금리인하 신중론 재확인…시장 관망세',       byline:'뉴욕 특파원 · 3시간 전', summary:'미국 연방준비제도 위원들이 인플레이션 둔화를 확인할 때까지 금리 인하에 신중할 것이라는 입장을 재확인했다.', url:'', lang:'ko' },
-      { id:4, cat:'부동산',  featured:false, headline:'서울 아파트 매매 거래 회복세…강남권 중심',               byline:'부동산114 · 4시간 전',  summary:'서울 아파트 매매 거래량이 회복세를 보이고 있다. 강남, 서초, 송파를 중심으로 매수 문의가 늘고 있다.', url:'', lang:'ko' },
-      { id:5, cat:'금리',    featured:false, headline:'한국은행 기준금리 동결 전망…내수 부진 우려',             byline:'머니투데이 · 5시간 전', summary:'한국은행이 이번 달 기준금리를 동결할 것이라는 전망이 우세하다. 내수 부진과 가계부채 우려가 금리 결정에 영향을 미칠 것으로 보인다.', url:'', lang:'ko' },
-      { id:6, cat:'암호화폐',featured:false, headline:'비트코인 6만8천달러 돌파…기관 매수세 지속',             byline:'코인데스크 · 6시간 전', summary:'비트코인이 6만8천달러를 돌파하며 상승세를 이어가고 있다. 기관 투자자들의 ETF 매수세가 가격 상승을 견인하고 있다.', url:'', lang:'ko' },
+      { id:1, cat:'주식',    featured:true,  headline:'코스피, 외국인 매수세에 2,640선 회복…반도체주 강세',   byline:'한국경제 · 1시간 전', summary:'코스피가 외국인 투자자들의 매수세에 힘입어 2,640선을 회복했다. 삼성전자와 SK하이닉스 등 반도체주가 강세를 보이며 지수 상승을 이끌었다.', url:'', lang:'ko' },
+      { id:2, cat:'환율',    featured:false, headline:'달러/원 환율 1,325원대로 하락…수출 호조 영향',         byline:'연합뉴스 · 2시간 전',  summary:'원/달러 환율이 1,325원대로 하락했다. 무역수지 흑자 지속과 외국인 주식 매수가 원화 강세를 이끌고 있다.', url:'', lang:'ko' },
+      { id:3, cat:'국제',    featured:false, headline:'미 연준, 연내 금리인하 신중론 재확인…시장 관망세',     byline:'뉴욕 특파원 · 3시간 전', summary:'미국 연방준비제도 위원들이 인플레이션 둔화를 확인할 때까지 금리 인하에 신중할 것이라는 입장을 재확인했다.', url:'', lang:'ko' },
+      { id:4, cat:'부동산',  featured:false, headline:'서울 아파트 매매 거래 회복세…강남권 중심',             byline:'부동산114 · 4시간 전',  summary:'서울 아파트 매매 거래량이 회복세를 보이고 있다. 강남, 서초, 송파를 중심으로 매수 문의가 늘고 있다.', url:'', lang:'ko' },
+      { id:5, cat:'금리',    featured:false, headline:'한국은행 기준금리 동결 전망…내수 부진 우려',           byline:'머니투데이 · 5시간 전', summary:'한국은행이 이번 달 기준금리를 동결할 것이라는 전망이 우세하다.', url:'', lang:'ko' },
+      { id:6, cat:'암호화폐',featured:false, headline:'비트코인 6만8천달러 돌파…기관 매수세 지속',           byline:'코인데스크 · 6시간 전', summary:'비트코인이 6만8천달러를 돌파하며 상승세를 이어가고 있다.', url:'', lang:'ko' },
     ];
     renderContent();
   }
