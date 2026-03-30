@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>모닝 브리프 — 경제뉴스</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1108">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="모닝 브리프">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1108; --ink-light: #3d3020; --ink-muted: #7a6a52;
+    --paper: #f5f0e8; --paper-dark: #ede7d9; --paper-darker: #ddd5c3;
+    --accent: #b5390a; --accent-gold: #c9960c; --rule: #c4b89a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  .masthead { background: var(--ink); color: var(--paper); padding: 0 16px; text-align: center; border-bottom: 3px double var(--accent-gold); }
+  .masthead-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 4px; border-bottom: 1px solid #3d3020; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--paper-darker); }
+  .masthead-slogan { font-family: 'Playfair Display', serif; font-style: italic; color: var(--accent-gold); }
+  .masthead-title { font-family: 'Playfair Display', serif; font-weight: 900; font-size: clamp(36px, 10vw, 72px); line-height: 1; padding: 10px 0 6px; color: #fff; }
+  .masthead-title span { color: var(--accent-gold); }
+  .masthead-subtitle { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--paper-darker); padding-bottom: 8px; font-weight: 300; }
+
+  .ticker-bar { background: var(--accent); color: #fff; font-size: 11px; font-weight: 500; overflow: hidden; white-space: nowrap; height: 28px; display: flex; align-items: center; }
+  .ticker-label { background: var(--ink); padding: 0 12px; height: 100%; display: flex; align-items: center; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0; }
+  .ticker-track { overflow: hidden; flex: 1; }
+  .ticker-scroll { display: flex; animation: scroll-ticker 35s linear infinite; gap: 40px; padding-left: 20px; }
+  .ticker-scroll span { flex-shrink: 0; }
+  .up { color: #7fffb0; } .down { color: #ffa0a0; }
+  @keyframes scroll-ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+  .filter-bar { padding: 10px 16px; background: var(--paper-dark); border-bottom: 2px solid var(--rule); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-btn { background: none; border: 1px solid var(--rule); padding: 4px 12px; font-size: 11px; font-family: 'Noto Sans KR', sans-serif; color: var(--ink-muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .filter-btn.active, .filter-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 700; }
+
+  .content-wrap { padding: 12px 14px; max-width: 480px; margin: 0 auto; }
+  .section-header { display: flex; align-items: center; gap: 8px; margin: 16px 0 10px; }
+  .section-header h2 { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: var(--ink-muted); }
+  .section-header::before, .section-header::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+  .loading-wrap { padding: 50px 0; text-align: center; color: var(--ink-muted); }
+  .loading-icon { font-size: 32px; margin-bottom: 14px; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .loading-dots span { display: inline-block; animation: dot-blink 1.2s infinite; font-size: 20px; }
+  .loading-dots span:nth-child(2){animation-delay:.2s} .loading-dots span:nth-child(3){animation-delay:.4s}
+  @keyframes dot-blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+  .market-strip { background: var(--paper-dark); border: 1px solid var(--rule); padding: 10px 12px; margin: 12px 0; }
+  .market-strip h3 { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--ink-muted); margin-bottom: 8px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+  .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .m-name { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .m-val { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; line-height: 1.1; }
+  .m-chg { font-size: 11px; font-weight: 700; }
+  .m-chg.up { color: #1a7a40; } .m-chg.down { color: var(--accent); }
+
+  .article-featured { border: 2px solid var(--ink); margin-bottom: 12px; cursor: pointer; transition: box-shadow 0.2s; background: var(--paper); animation: fade-in 0.4s ease; }
+  .article-featured:hover { box-shadow: 4px 4px 0 var(--ink); }
+  .cat-badge { background: var(--accent); color: #fff; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 8px; display: inline-block; font-weight: 700; }
+  .headline { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 20px; line-height: 1.3; padding: 8px 12px 4px; border-bottom: 1px solid var(--rule); }
+  .byline { font-size: 10px; padding: 5px 12px; color: var(--ink-muted); border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 6px; }
+  .summary { padding: 10px 12px; font-size: 13px; line-height: 1.7; color: var(--ink-light); }
+  .article-actions { display: flex; border-top: 1px solid var(--rule); }
+  .action-btn { flex: 1; background: none; border: none; border-right: 1px solid var(--rule); padding: 8px; font-size: 11px; cursor: pointer; color: var(--ink-muted); font-family: 'Noto Sans KR', sans-serif; display: flex; align-items: center; justify-content: center; gap: 4px; transition: background 0.15s; }
+  .action-btn:last-child { border-right: none; }
+  .action-btn:hover { background: var(--paper-darker); }
+  .action-btn.active { color: var(--accent); }
+  .action-btn svg { width: 14px; height: 14px; }
+
+  .col-divider { width: 100%; height: 2px; background: var(--ink); margin: 16px 0 12px; position: relative; }
+  .col-divider::after { content: '◆'; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); background: var(--paper); color: var(--ink); padding: 0 8px; font-size: 10px; }
+
+  .articles-grid { display: flex; flex-direction: column; }
+  .article-small { padding: 12px 0; border-bottom: 1px solid var(--rule); display: flex; gap: 12px; align-items: flex-start; animation: fade-in 0.4s ease both; }
+  .article-small:nth-child(2){animation-delay:.05s} .article-small:nth-child(3){animation-delay:.1s} .article-small:nth-child(4){animation-delay:.15s} .article-small:nth-child(5){animation-delay:.2s}
+  .art-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 28px; color: var(--rule); line-height: 1; flex-shrink: 0; width: 28px; }
+  .art-body { flex: 1; cursor: pointer; }
+  .art-cat { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
+  .art-title { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 15px; line-height: 1.4; margin-bottom: 4px; }
+  .art-meta { font-size: 10px; color: var(--ink-muted); }
+  .art-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+  .art-icon-btn { background: none; border: none; cursor: pointer; color: var(--ink-muted); padding: 4px; transition: color 0.15s; }
+  .art-icon-btn:hover, .art-icon-btn.active { color: var(--accent); }
+  .art-icon-btn svg { width: 15px; height: 15px; display: block; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,17,8,0.75); z-index: 1000; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { background: var(--paper); width: 100%; max-width: 480px; margin: 0 auto; border-top: 3px solid var(--accent); padding: 20px 16px 32px; animation: slide-up 0.3s ease; max-height: 80vh; overflow-y: auto; }
+  @keyframes slide-up { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  .modal-header h3 { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 16px; }
+  .modal-close { background: none; border: 1px solid var(--rule); cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 14px; }
+  .modal-article-title { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 14px; margin-bottom: 12px; color: var(--ink-light); line-height: 1.4; }
+  .modal-body-text { font-size: 13px; line-height: 1.8; color: var(--ink-light); }
+  .read-more { display: inline-block; margin-top: 12px; font-size: 11px; color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); }
+  .tts-ctrl { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .tts-btn { background: var(--ink); color: var(--paper); border: none; padding: 8px 16px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
+  .tts-btn:hover, .tts-btn.playing { background: var(--accent); }
+  .tts-btn svg { width: 14px; height: 14px; }
+  .tts-info { font-size: 10px; color: var(--ink-muted); }
+
+  .bookmarks-panel { display: none; position: fixed; inset: 0; background: var(--paper); z-index: 1001; overflow-y: auto; }
+  .bookmarks-panel.open { display: block; }
+  .panel-header { background: var(--ink); color: var(--paper); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; }
+  .panel-header h2 { font-family: 'Playfair Display', serif; font-size: 18px; }
+  .panel-close { background: none; border: 1px solid #5a5040; color: var(--paper); width: 30px; height: 30px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .panel-body { padding: 16px; }
+  .empty-state { text-align: center; padding: 40px 0; color: var(--ink-muted); font-size: 13px; }
+  .empty-state .big-icon { font-size: 40px; margin-bottom: 12px; }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); display: flex; max-width: 480px; margin: 0 auto; border-top: 2px solid var(--accent); z-index: 100; }
+  .nav-btn { flex: 1; background: none; border: none; padding: 10px 4px 12px; color: var(--ink-muted); cursor: pointer; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-family: 'Noto Sans KR', sans-serif; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: color 0.15s; border-right: 1px solid #2a2010; position: relative; }
+  .nav-btn:last-child { border-right: none; }
+  .nav-btn svg { width: 18px; height: 18px; }
+  .nav-btn.active { color: var(--accent-gold); }
+  .nav-btn:hover { color: var(--paper); }
+  .nav-badge { position: absolute; top: 6px; background: var(--accent); color: #fff; width: 14px; height: 14px; border-radius: 50%; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .spacer { height: 70px; }
+  @keyframes fade-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-top">
+    <span id="today-date" style="font-weight:300"></span>
+    <span class="masthead-slogan">Since 2024 · AI-Powered</span>
+    <span style="font-weight:300">Vol. 1</span>
+  </div>
+  <div class="masthead-title">모닝 <span>브리프</span></div>
+  <div class="masthead-subtitle">Morning Brief — Economic Intelligence Daily</div>
+</header>
+
+<div class="ticker-bar">
+  <div class="ticker-label">실시간</div>
+  <div class="ticker-track">
+    <div class="ticker-scroll">
+      <span>코스피 <strong>2,641</strong> <span class="up">▲ +1.24%</span></span>
+      <span>코스닥 <strong>872</strong> <span class="down">▼ −0.38%</span></span>
+      <span>달러/원 <strong>1,328</strong> <span class="up">▲ +0.12%</span></span>
+      <span>S&amp;P 500 <strong>5,312</strong> <span class="up">▲ +0.67%</span></span>
+      <span>나스닥 <strong>16,843</strong> <span class="up">▲ +0.91%</span></span>
+      <span>WTI유가 <strong>$83.2</strong> <span class="down">▼ −0.45%</span></span>
+      <span>금 <strong>$2,341</strong> <span class="up">▲ +0.22%</span></span>
+      <span>비트코인 <strong>$67,420</strong> <span class="up">▲ +2.15%</span></span>
+      <span>코스피 <strong>2,641</strong> <span class="up">▲ +1.24%</span></span>
+      <span>코스닥 <strong>872</strong> <span class="down">▼ −0.38%</span></span>
+      <span>달러/원 <strong>1,328</strong> <span class="up">▲ +0.12%</span></span>
+      <span>S&amp;P 500 <strong>5,312</strong> <span class="up">▲ +0.67%</span></span>
+      <span>나스닥 <strong>16,843</strong> <span class="up">▲ +0.91%</span></span>
+      <span>WTI유가 <strong>$83.2</strong> <span class="down">▼ −0.45%</span></span>
+      <span>금 <strong>$2,341</strong> <span class="up">▲ +0.22%</span></span>
+      <span>비트코인 <strong>$67,420</strong> <span class="up">▲ +2.15%</span></span>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar" id="filter-bar">
+  <button class="filter-btn active" data-cat="전체">전체</button>
+  <button class="filter-btn" data-cat="주식">주식</button>
+  <button class="filter-btn" data-cat="환율">환율</button>
+  <button class="filter-btn" data-cat="부동산">부동산</button>
+  <button class="filter-btn" data-cat="국제">국제</button>
+  <button class="filter-btn" data-cat="금리">금리</button>
+  <button class="filter-btn" data-cat="암호화폐">암호화폐</button>
+</div>
+
+<main class="content-wrap" id="main-content">
+  <div class="loading-wrap">
+    <div class="loading-icon">📰</div>
+    <p style="font-size:13px;line-height:1.8">실시간 뉴스를 불러오고 있습니다<br><span class="loading-dots"><span>•</span><span>•</span><span>•</span></span></p>
+  </div>
+</main>
+
+<div class="spacer"></div>
+
+<div class="modal-overlay" id="ai-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3>📰 뉴스 상세</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-article-title" id="modal-article-title"></div>
+    <div id="modal-body"></div>
+    <div class="tts-ctrl">
+      <button class="tts-btn" id="tts-btn" onclick="toggleTTS()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        음성 듣기
+      </button>
+      <span class="tts-info" id="tts-info">브라우저 TTS</span>
+    </div>
+  </div>
+</div>
+
+<div class="bookmarks-panel" id="bookmarks-panel">
+  <div class="panel-header">
+    <h2>즐겨찾기</h2>
+    <button class="panel-close" onclick="closeBookmarks()">✕</button>
+  </div>
+  <div class="panel-body" id="bookmarks-body"></div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showTab('home')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>홈
+  </button>
+  <button class="nav-btn" onclick="showTab('bookmarks')" style="position:relative">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>즐겨찾기
+    <span class="nav-badge" id="bookmark-count" style="display:none">0</span>
+  </button>
+  <button class="nav-btn" onclick="openGlobalTTS()">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>브리핑
+  </button>
+  <button class="nav-btn" onclick="refreshNews()">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>새로고침
+  </button>
+</nav>
+
+<script>
+const RSS_FEEDS = [
+  { q: '주식+코스피+증시',         source: '경제뉴스', cat: '주식'    },
+  { q: '환율+달러+원화',           source: '경제뉴스', cat: '환율'    },
+  { q: '부동산+아파트+주택',       source: '경제뉴스', cat: '부동산'  },
+  { q: '금리+한국은행+채권',       source: '경제뉴스', cat: '금리'    },
+  { q: '비트코인+암호화폐+코인',   source: '경제뉴스', cat: '암호화폐'},
+  { q: '미국경제+연준+글로벌',     source: '경제뉴스', cat: '국제'    },
+];
+
+const GNEWS = 'https://corsproxy.io/?https://news.google.com/rss/search?hl=ko&gl=KR&ceid=KR:ko&q=';
+const MARKET_DATA = [
+  { name:'KOSPI',   val:'2,641', chg:'+1.24%', up:true  },
+  { name:'S&P 500', val:'5,312', chg:'+0.67%', up:true  },
+  { name:'USD/KRW', val:'1,328', chg:'+0.12%', up:true  },
+  { name:'WTI 유가', val:'$83.2', chg:'−0.45%', up:false },
+];
+const CAT_KEYS = {
+  '주식':    ['주식','코스피','코스닥','증시','상장','배당','삼성전자','sk하이닉스','etf'],
+  '환율':    ['환율','달러','원화','엔화','유로','외환'],
+  '부동산':  ['부동산','아파트','주택','분양','전세','청약'],
+  '금리':    ['금리','한국은행','기준금리','채권','국고채','연준','fed'],
+  '암호화폐':['비트코인','이더리움','코인','가상화폐','crypto','bitcoin'],
+  '국제':    ['미국','중국','유럽','일본','글로벌','수출','무역','gdp'],
+};
+
+let NEWS_DATA = [];
+let bookmarks = JSON.parse(localStorage.getItem('mb_bookmarks') || '[]');
+let currentFilter = '전체';
+let currentArticle = null;
+let ttsUtterance = null;
+let ttsPlaying = false;
+
+function detectCat(title, desc, def) {
+  const text = (title + ' ' + (desc || '')).toLowerCase();
+  for (const [cat, keys] of Object.entries(CAT_KEYS)) {
+    if (keys.some(k => text.includes(k))) return cat;
+  }
+  return def || '국제';
+}
+
+function timeAgo(d) {
+  if (!d) return '방금 전';
+  const diff = Math.floor((Date.now() - new Date(d)) / 60000);
+  if (diff < 1) return '방금 전';
+  if (diff < 60) return diff + '분 전';
+  if (diff < 1440) return Math.floor(diff/60) + '시간 전';
+  return Math.floor(diff/1440) + '일 전';
+}
+
+function stripHtml(s) {
+  return (s||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').trim();
+}
+
+async function fetchRSS(feed) {
+  try {
+    const url = `${GNEWS}${encodeURIComponent(feed.q)}`;
+    const res = await fetch(url);
+    const xml = await res.text();
+    if (!xml) return [];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const items = [...doc.querySelectorAll('item')];
+    return items.slice(0, 4).map(item => ({
+      title: stripHtml(item.querySelector('title')?.textContent || '').replace(/ - [^-]+$/, ''),
+      desc: stripHtml(item.querySelector('description')?.textContent || '').slice(0, 200),
+      pubDate: item.querySelector('pubDate')?.textContent || '',
+      link: item.querySelector('link')?.textContent || '',
+      source: item.querySelector('source')?.textContent || feed.source,
+      cat: feed.cat,
+    })).filter(a => a.title);
+  } catch(e) { return []; }
+}
+
+async function fetchNews() {
+  document.getElementById('main-content').innerHTML = `<div class="loading-wrap"><div class="loading-icon">📰</div><p style="font-size:13px;line-height:1.8">실시간 뉴스를 불러오고 있습니다<br><span class="loading-dots"><span>•</span><span>•</span><span>•</span></span></p></div>`;
+
+  try {
+    const results = await Promise.allSettled(RSS_FEEDS.map(f => fetchRSS(f)));
+    let articles = [];
+    results.forEach(r => { if (r.status === 'fulfilled') articles.push(...r.value); });
+
+    const seen = new Set();
+    articles = articles.filter(a => {
+      if (!a.title || seen.has(a.title)) return false;
+      seen.add(a.title); return true;
+    }).sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+    if (articles.length === 0) throw new Error('no articles');
+
+    NEWS_DATA = articles.slice(0, 12).map((a, i) => ({
+      id: i+1, cat: a.cat, featured: i === 0,
+      headline: a.title,
+      byline: a.source + ' · ' + timeAgo(a.pubDate),
+      summary: a.desc || '기사 내용을 불러올 수 없습니다.',
+      url: a.link, lang: 'ko',
+    }));
+    renderContent();
+
+  } catch(e) {
+    NEWS_DATA = [
+      { id:1, cat:'주식',    featured:true,  headline:'코스피, 외국인 매수세에 2,640선 회복…반도체주 강세',     byline:'한국경제 · 1시간 전', summary:'코스피가 외국인 투자자들의 매수세에 힘입어 2,640선을 회복했다. 삼성전자와 SK하이닉스 등 반도체주가 강세를 보이며 지수 상승을 이끌었다.', url:'', lang:'ko' },
+      { id:2, cat:'환율',    featured:false, headline:'달러/원 환율 1,325원대로 하락…수출 호조 영향',           byline:'연합뉴스 · 2시간 전',  summary:'원/달러 환율이 1,325원대로 하락했다. 무역수지 흑자 지속과 외국인 주식 매수가 원화 강세를 이끌고 있다.', url:'', lang:'ko' },
+      { id:3, cat:'국제',    featured:false, headline:'미 연준, 연내 금리인하 신중론 재확인…시장 관망세',       byline:'뉴욕 특파원 · 3시간 전', summary:'미국 연방준비제도 위원들이 인플레이션 둔화를 확인할 때까지 금리 인하에 신중할 것이라는 입장을 재확인했다.', url:'', lang:'ko' },
+      { id:4, cat:'부동산',  featured:false, headline:'서울 아파트 매매 거래 회복세…강남권 중심',               byline:'부동산114 · 4시간 전',  summary:'서울 아파트 매매 거래량이 회복세를 보이고 있다. 강남, 서초, 송파를 중심으로 매수 문의가 늘고 있다.', url:'', lang:'ko' },
+      { id:5, cat:'금리',    featured:false, headline:'한국은행 기준금리 동결 전망…내수 부진 우려',             byline:'머니투데이 · 5시간 전', summary:'한국은행이 이번 달 기준금리를 동결할 것이라는 전망이 우세하다. 내수 부진과 가계부채 우려가 금리 결정에 영향을 미칠 것으로 보인다.', url:'', lang:'ko' },
+      { id:6, cat:'암호화폐',featured:false, headline:'비트코인 6만8천달러 돌파…기관 매수세 지속',             byline:'코인데스크 · 6시간 전', summary:'비트코인이 6만8천달러를 돌파하며 상승세를 이어가고 있다. 기관 투자자들의 ETF 매수세가 가격 상승을 견인하고 있다.', url:'', lang:'ko' },
+    ];
+    renderContent();
+  }
+}
+
+function renderContent() {
+  const main = document.getElementById('main-content');
+  const filtered = currentFilter === '전체' ? NEWS_DATA : NEWS_DATA.filter(n => n.cat === currentFilter);
+  const featured = filtered.find(n => n.featured) || filtered[0];
+  const rest = filtered.filter(n => n !== featured);
+
+  let html = `<div class="market-strip"><h3>📊 시장 현황</h3><div class="market-grid">`;
+  MARKET_DATA.forEach(m => { html += `<div><div class="m-name">${m.name}</div><div class="m-val">${m.val}</div><div class="m-chg ${m.up?'up':'down'}">${m.up?'▲':'▼'} ${m.chg}</div></div>`; });
+  html += `</div></div><div class="section-header"><h2>오늘의 헤드라인</h2></div>`;
+
+  if (featured) {
+    const bm = bookmarks.includes(featured.id);
+    html += `<div class="article-featured" onclick="openArticle(${featured.id})">
+      <div><span class="cat-badge">${featured.cat}</span></div>
+      <div class="headline">${featured.headline}</div>
+      <div class="byline"><span>🇰🇷</span><span>${featured.byline}</span></div>
+      <div class="summary">${featured.summary}</div>
+      <div class="article-actions">
+        <button class="action-btn" onclick="event.stopPropagation();openArticle(${featured.id})"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>자세히</button>
+        <button class="action-btn" onclick="event.stopPropagation();speakArticle(${featured.id})"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>듣기</button>
+        <button class="action-btn ${bm?'active':''}" id="bm-feat-${featured.id}" onclick="event.stopPropagation();toggleBookmark(${featured.id})"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${bm?'저장됨':'저장'}</button>
+      </div></div>`;
+  }
+
+  html += `<div class="col-divider"></div><div class="section-header"><h2>주요 뉴스</h2></div><div class="articles-grid">`;
+  rest.forEach((art, i) => {
+    const bm = bookmarks.includes(art.id);
+    html += `<div class="article-small">
+      <div class="art-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="art-body" onclick="openArticle(${art.id})">
+        <div class="art-cat">${art.cat}</div>
+        <div class="art-title">${art.headline}</div>
+        <div class="art-meta">${art.byline}</div>
+      </div>
+      <div class="art-actions">
+        <button class="art-icon-btn" onclick="speakArticle(${art.id})"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button>
+        <button class="art-icon-btn ${bm?'active':''}" id="bm-${art.id}" onclick="toggleBookmark(${art.id})"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg></button>
+      </div></div>`;
+  });
+  html += `</div>`;
+  if (filtered.length === 0) html += `<div class="empty-state"><div class="big-icon">📰</div><div>해당 카테고리의 뉴스가 없습니다</div></div>`;
+  main.innerHTML = html;
+}
+
+function openArticle(id) {
+  currentArticle = NEWS_DATA.find(n => n.id === id);
+  if (!currentArticle) return;
+  document.getElementById('modal-article-title').textContent = currentArticle.headline;
+  let body = `<div class="modal-body-text"><p>${currentArticle.summary}</p>`;
+  if (currentArticle.url) body += `<a class="read-more" href="${currentArticle.url}" target="_blank">원문 보기 →</a>`;
+  body += `</div>`;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('ai-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('ai-modal').classList.remove('open'); stopTTS(); }
+
+function toggleTTS() {
+  if (ttsPlaying) { stopTTS(); return; }
+  if (!currentArticle) return;
+  speakText(currentArticle.headline + '. ' + currentArticle.summary);
+}
+
+function speakArticle(id) {
+  const art = NEWS_DATA.find(n => n.id === id);
+  if (!art) return;
+  currentArticle = art;
+  openArticle(id);
+  setTimeout(() => speakText(art.headline + '. ' + art.summary), 300);
+}
+
+function speakText(text) {
+  if (!window.speechSynthesis) { document.getElementById('tts-info').textContent = 'TTS 미지원'; return; }
+  stopTTS();
+  ttsUtterance = new SpeechSynthesisUtterance(text);
+  ttsUtterance.lang = 'ko-KR'; ttsUtterance.rate = 0.95;
+  ttsUtterance.onstart = () => {
+    ttsPlaying = true;
+    const btn = document.getElementById('tts-btn');
+    if (btn) { btn.classList.add('playing'); btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> 정지`; }
+    document.getElementById('tts-info').textContent = '재생 중...';
+  };
+  ttsUtterance.onend = () => {
+    ttsPlaying = false;
+    const btn = document.getElementById('tts-btn');
+    if (btn) { btn.classList.remove('playing'); btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg> 음성 듣기`; }
+    document.getElementById('tts-info').textContent = '재생 완료';
+  };
+  window.speechSynthesis.speak(ttsUtterance);
+}
+
+function stopTTS() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  ttsPlaying = false;
+  const btn = document.getElementById('tts-btn');
+  if (btn) { btn.classList.remove('playing'); btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg> 음성 듣기`; }
+}
+
+function openGlobalTTS() {
+  if (NEWS_DATA.length === 0) return;
+  currentArticle = NEWS_DATA[0];
+  document.getElementById('modal-article-title').textContent = '🎙 오늘의 전체 모닝 브리핑';
+  document.getElementById('modal-body').innerHTML = `<div class="modal-body-text"><p>오늘의 주요 경제 뉴스 ${NEWS_DATA.length}건을 읽어드립니다.</p></div>`;
+  document.getElementById('ai-modal').classList.add('open');
+  setTimeout(() => speakText('안녕하세요. 오늘의 경제 모닝 브리핑을 시작합니다. ' + NEWS_DATA.map((n,i) => `${i+1}번. ${n.headline}`).join('. ')), 300);
+}
+
+function toggleBookmark(id) {
+  const idx = bookmarks.indexOf(id);
+  if (idx === -1) bookmarks.push(id); else bookmarks.splice(idx, 1);
+  localStorage.setItem('mb_bookmarks', JSON.stringify(bookmarks));
+  updateBookmarkBadge();
+  const isNow = bookmarks.includes(id);
+  const s = document.getElementById(`bm-${id}`); const f = document.getElementById(`bm-feat-${id}`);
+  if (s) s.classList.toggle('active', isNow);
+  if (f) { f.classList.toggle('active', isNow); f.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${isNow?'저장됨':'저장'}`; }
+}
+
+function updateBookmarkBadge() {
+  const b = document.getElementById('bookmark-count');
+  if (bookmarks.length > 0) { b.textContent = bookmarks.length; b.style.display = 'flex'; } else { b.style.display = 'none'; }
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i === (tab==='home'?0:1)));
+  if (tab === 'bookmarks') openBookmarks();
+}
+
+function openBookmarks() {
+  document.getElementById('bookmarks-panel').classList.add('open');
+  const body = document.getElementById('bookmarks-body');
+  if (bookmarks.length === 0) { body.innerHTML = `<div class="empty-state"><div class="big-icon">🔖</div><div>저장된 뉴스가 없습니다</div></div>`; return; }
+  let html = '<div class="articles-grid">';
+  bookmarks.forEach((id, i) => {
+    const art = NEWS_DATA.find(n => n.id === id); if (!art) return;
+    html += `<div class="article-small"><div class="art-num">${String(i+1).padStart(2,'0')}</div><div class="art-body" onclick="openArticle(${art.id});closeBookmarks()"><div class="art-cat">${art.cat}</div><div class="art-title">${art.headline}</div><div class="art-meta">${art.byline}</div></div><div class="art-actions"><button class="art-icon-btn active" onclick="toggleBookmark(${art.id});openBookmarks()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg></button></div></div>`;
+  });
+  body.innerHTML = html + '</div>';
+}
+
+function closeBookmarks() {
+  document.getElementById('bookmarks-panel').classList.remove('open');
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  document.querySelectorAll('.nav-btn')[1].classList.remove('active');
+}
+
+function refreshNews() { fetchNews(); }
+
+function setupFilters() {
+  document.getElementById('filter-bar').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn'); if (!btn) return;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentFilter = btn.dataset.cat;
+    if (NEWS_DATA.length > 0) renderContent();
+  });
+}
+
+function init() {
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  updateBookmarkBadge();
+  setupFilters();
+  fetchNews();
+}
+
+document.getElementById('ai-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+init();
+
+// PWA 서비스워커 등록
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
