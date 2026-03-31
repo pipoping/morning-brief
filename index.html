@@ -298,6 +298,12 @@ async function fetchNews() {
       url: a.link,
       lang: 'ko',
     }));
+
+    // 실시간 시세 업데이트
+    if (data.market && data.market.length > 0) {
+      updateMarketData(data.market);
+    }
+
     renderContent();
 
   } catch(e) {
@@ -312,6 +318,20 @@ async function fetchNews() {
     ];
     renderContent();
   }
+}
+
+function updateMarketData(market) {
+  // ticker 업데이트
+  const tickerMap = { 'KOSPI': 't-kospi', 'S&P 500': 't-sp', 'USD/KRW': 't-usd', 'WTI 유가': 't-wti' };
+  market.forEach(m => {
+    const id = tickerMap[m.name];
+    if (id) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `${m.val} <span class="${m.up ? 'up' : 'down'}">${m.up ? '▲' : '▼'} ${m.chg}</span>`;
+    }
+  });
+  // MARKET_DATA 업데이트 (시장 현황 카드)
+  market.forEach((m, i) => { if (MARKET_DATA[i]) { MARKET_DATA[i].val = m.val; MARKET_DATA[i].chg = m.chg; MARKET_DATA[i].up = m.up; } });
 }
 
 function renderContent() {
